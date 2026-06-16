@@ -16,10 +16,8 @@ pipeline {
         stage('Deploy') { 
             steps {
                 script { 
-                    def srcPath = "C:\\Users\\Shravani Kijbile\\eclipse
-workspace\\Devops\\Demo\\src\\main\\webapp" 
-                    def destPath = "C:\\Program Files\\Apache Software Foundation\\apache
-tomcat-11.0.14\\webapps\\Devops" 
+                    def srcPath = "C:\\Users\\Shravani Kijbile\\eclipseworkspace\\Devops\\Demo\\src\\main\\webapp" 
+                    def destPath = "C:\\Program Files\\Apache Software Foundation\\apachetomcat-11.0.14\\webapps\\Devops" 
                     if (fileExists(srcPath)) { 
                         bat "xcopy /E /I \"${srcPath}\" \"${destPath}\"" 
                     } else { 

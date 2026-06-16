@@ -1,0 +1,599 @@
+Ansible
+-------------
+Installation of Ansible:
+
+sudo apt update
+
+sudo apt install ansible -y
+
+ansible --version
+
+nano hosts
+
+[all]/[local]
+localhost ansible_connection=local
+
+Crtl+X -> Y -> Enter
+
+ansible all -i hosts -m ping
+
+ansible all -m ping
+
+ansible localhost -m ping -c local
+
+ansible local -m shell -a "whoami"
+________________________________________________________
+
+(a) Create and Delete Directories on Managed Node
+
+ansible all -i hosts -m file -a "path=/home/ubuntu/testdir state=directory"
+
+ls 
+ls -ld /home/ubuntu/
+
+ls -l /home/ubuntu/
+
+ansible all -i hosts -m file -a "path=/home/ubuntu/testdir state=absent"
+
+ls 
+
+______________________________________________________________
+
+b) Copy Files to Remote Hosts Using Ad-hoc Commands
+
+echo "Hello Ansible" > file.txt
+
+ansible all -i hosts -m copy -a "src=file.txt dest=/home/ubuntu/testdir/"
+
+ls -l /home/ubuntu/testdir/
+
+_______________________________________________________________________________________________________
+
+Ansible Playbooks:
+-----------------
+
+Copying Directory 
+
+nano directory_playbook.yml
+
+---
+
+- name: Create Directory
+  hosts: localhost
+  connection: local
+  become: yes
+  
+  tasks:
+
+    - name: Create Directory
+      file:
+	path: /tmp/testdir
+	state: directory
+
+nano delete_playbook.yml
+
+---
+- name: Delete Directory
+  hosts: localhost
+  connection: local
+  become: yes
+  tasks:
+    - name: Delete Directory
+      file:
+	path: tmp/testdir
+	state: absent
+___________________________________________________________________________________
+
+Demo Playbook
+
+nano first_playbook.yml
+
+---
+
+- name: First Playbook
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: First Playbook
+      debug:
+	msg: "Hello World"
+___________________________________________________________________________________
+
+Installing and Running Apache
+
+nano start_apache.yml
+
+---
+- name: Install and Start Apache
+  hosts: localhost
+  connection: local
+  become: yes
+  become_method: sudo
+  
+  tasks:
+    - name: Install Apache
+      apt:
+        name: apache2
+        state: present
+    - name: Start Apache
+      service:
+        name: apache2
+        state: started
+        enabled: yes
+
+ansible-playbook start_apache.yml
+
+To check status of Apache Service:-
+sudo systemctl status apache2
+
+Check port 80 usage:-
+sudo lsof -i:80
+
+Start Apache:-
+sudo systemctl start apache2
+sudo systemctl status apache2
+
+________________________________________________________________________________________
+
+Infrastructure as Code
+
+nano code_playbook.yml
+
+---
+
+- name: Simple Infrasture Setup
+  hosts: localhost
+  connection: local
+  become: yes
+  
+  tasks:
+    - name: Install Apache
+      apt:
+        name: apache2
+        state: present
+    - name: Start Apache
+      service:
+        name: apache2
+        state: started
+        enabled: yes
+    - name: Deploy index.html
+      copy:
+        content: "<h1>Hello from Ansible</h1>"
+	dest: /var/www/html/index.html
+
+ansible-playbook code_playbook.yml
+
+__________________________________________________________________________________________
+
+Application Deployment
+
+nano app_deploy.yml
+
+---
+
+- name: Application Deployment
+  hosts: localhost
+  become: yes
+  tasks:
+    - name: Install Apache and PHP
+      apt:
+        name:
+          - apache2
+          - php
+        state: present
+        update_check: yes
+    - name: Deploy a PHP application
+      copy:
+        content: |
+          <?php
+          echo "<h1>Hello from Ansible and PHP</h1>";
+          echo "<body>This is Welcome demo</body>";
+          ?>
+        dest: /var/www/html/index.php
+    - name: Restart Apache
+      service:
+        name: apache2
+        state: restarted
+
+___________________________________________________________________________________________________
+
+Docker:
+--------
+
+docker --version
+
+docker info
+
+docker images { List Docker Images – Images are templates used to create containers }
+
+Pull Image from Docker Hub – Downloads image from Docker Hub : docker pull nginx
+
+Docker container ls – lists all running Docker containers on your system : docker container ls or docker ps
+
+docker container ls -a {Lists all Docker containers on your system – both running and stopped}
+
+docker stop {container_id}
+
+docker start {container_id}
+
+docker logs {container_id}
+
+docker rm {container_id}   
+
+docker rmi {image_name}
+________________________________________________
+
+docker pull ubuntu  {Pulling the Ubuntu image}
+
+docker run -d -name my-Linux ubuntu {Run Ubuntu Container in detached mode}
+
+docker run -dit --name my-Linux ubuntu
+
+_______________________________________________________
+
+Volumes
+
+docker volume create myvolume1 {A Docker volume is used to store data permanently, even if the container is deleted.}
+
+docker volume ls
+
+docker volume inspect myvolume1 {This shows details like mount location}
+
+docker run -v myvolume1:/data nginx {Now anything stored in /data will be saved in volume}
+
+docker volume rm myvolume1 {It gives because the volume is used by a container.The volume must not be used by any container.}
+
+docker run -it -v myvolume1:/data ubuntu {This command runs a container from the Ubuntu image and mounts a Docker volume inside the container.}
+cd data
+touch file.txt
+ls
+exit
+___________________________________________________________________
+
+docker run -it busybox {Starts an interactive container using the busybox image}
+mkdir devops
+echo "Welcome to new file" > devops/file.txt
+cd devops
+ls
+cat file.txt
+exit
+
+docker run -it -v newdata:/devops busybox 
+echo “Entering data again”>devops/file1.txt
+cd docker
+ls 
+cat file1.txt
+exit
+____________________________________________________________________
+
+Window cmd
+echo "Hello Devops" > file1.txt
+
+docker run -dit --name my_linux ubuntu
+
+docker cp file.txt my_linux:/home 
+
+docker exec -it my_linux bash
+cd home
+ls
+cat file1.txt
+___________________________________________________________
+
+mkdir Docker
+cd Docker
+echo "New File" > newfile.txt
+docker cp Docker my_linux:/home
+
+docker cp my_linux:/home/file1.txt .
+____________________________________________________________
+
+mkdir docker-demo
+cd docker-demo
+notepad index.html
+
+Dockerfile:
+FROM nginx:latest
+COPY index.html /usr/share/nginx/html/index.html
+
+docker build -t my_webapp .
+
+docker run -d -p 9090:80 my_webapp or docker run -d -p 8080:80 --name mycontainer myapp
+
+_______________________________________________________________________________________________________________
+
+Jenkins
+-------
+
+pipeline {
+    agent any
+
+    stages {
+        stage('Build') {
+            steps {
+                echo 'Building Project....'
+            }
+        }
+        stage('Test'){
+            steps{
+                echo 'Running tests...'
+            }
+        }
+        stage('Deploy'){
+            steps{
+                echo 'Deploying Application....'
+            }
+        }
+    }
+    post{
+        success{
+            echo 'Pipeline completed Successfully!'
+        }
+        failure{
+            echo 'Pipeline failed!'
+        }
+    }
+}
+
+__________________________________________________________________________________
+Index.jsp
+
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%> 
+<html> 
+<head> 
+    <title>CookiesDemo</title> 
+</head> 
+<body> 
+    <h2>CookiesDemo - </h2> 
+    <form action="CookiesDemo.jsp" method="get"> 
+        Name - <input type="text" name="usernm"> 
+        <input type="submit" value="Submit Query"> 
+    </form>
+</body> 
+</html> 
+
+CookiesDemo.jsp
+<%@ page language="java" contentType="text/html; charset=UTF-8" 
+    pageEncoding="UTF-8"%> 
+<%@ page import="jakarta.servlet.http.Cookie" %> 
+s<%@ page import="java.io.*" %> 
+<html> 
+<head> 
+    <title>Session Management using Cookies</title> 
+</head> 
+<body> 
+    <h2>Session Management using Cookies</h2> 
+    <% 
+        String username = request.getParameter("usernm"); 
+        Cookie[] cookies = request.getCookies(); 
+        int visitCount = 0; 
+        boolean userExists = false; 
+ 
+        if (cookies != null) { 
+            for (Cookie cookie : cookies) { 
+                if (cookie.getName().equals("visitCount")) { 
+                    visitCount = Integer.parseInt(cookie.getValue()); 
+                } 
+                if (cookie.getName().equals("username")) { 
+                    userExists = true;
+        } 
+            } 
+        } 
+        visitCount++; 
+        Cookie visitCookie = new Cookie("visitCount", String.valueOf(visitCount)); 
+        visitCookie.setMaxAge(60 * 60 * 24); 
+        response.addCookie(visitCookie); 
+ 
+        if (!userExists && username != null) { 
+            Cookie userCookie = new Cookie("username", username); 
+            userCookie.setMaxAge(60 * 60 * 24); 
+            response.addCookie(userCookie); 
+        } 
+    %> 
+    <p>Hello <%= username != null ? username : "Guest" %> You have hit the page <%= visitCount 
+%> time(s)</p> 
+    <a href="CookiesDemo.jsp?usernm=<%= username %>">Hit Again</a> 
+</body> 
+</html> 
+
+git init 
+
+git add . 
+
+git commit -m "Commit" 
+
+git remote add origin https://github.com/shravani-k26/DevopsDemo.git 
+
+git push origin master 
+
+___________________________________________________________________________________
+
+GitLab
+
+.gitlab-ci.yml
+
+build-steps:
+  script:
+    - echo "First Step in build"
+    - echo "Second Step in build"
+
+________________________________________________
+
+build-steps:
+  script:
+    - echo "First Step in build"
+    - echo "Second Step in build"
+
+testing-job:
+  script:
+    - echo "First Step in testing..."
+    - echo "Second Step in testing..."
+
+deploy-job:
+  script:
+    - echo "This is deplot Step..."
+
+________________________________________________________
+
+stages:
+  - build
+  - test
+  - deploy
+
+build-steps:
+  stage: build
+  script:
+    - echo "First Step in build"
+    - echo "Second Step in build"
+
+testing-job:
+  stage: test
+  script:
+    - echo "First Step in testing..."
+    - echo "Second Step in testing..."
+
+deploy-job:
+  stage: deploy
+  script:
+    - echo "This is deplot Step..."
+
+_______________________________________________________________________
+
+try.sh
+echo "This is try bash script."
+touch myfile.txt
+echo "Sample text added" > myfile.txt
+echo "This is end of bash script."
+
+bash_execution:
+  script:
+    - bash ./try.sh
+
+_______________________________________________________
+
+bash_execution:
+  script:
+    - mkdir myfolder
+    - cp ./try.sh myfolder
+    - cd myfolder
+    - bash ./try.sh
+    - touch newtext.txt
+
+  artifacts:
+    paths:
+      - "./myfolder"
+    when: on_success
+    access: all
+    expire_in: 30 days
+
+________________________________________________________________________
+
+class HelloWorld {
+    public static void main(String a[]) {
+        System.out.println("Hello World");
+    }
+}
+
+stages:
+  - build
+  - test
+
+before_script:
+  - apt-get update && apt-get install -y openjdk-17-jdk
+
+build:
+  stage: build
+  script:
+    - javac HelloWorld.java
+    - ls -l
+
+  artifacts:
+    paths:
+      - HelloWorld.class
+
+  only:
+    - main
+
+test:
+  stage: test
+  script:
+    - ls -l
+    - java HelloWorld
+
+  only:
+    - main
+
+vi HelloWorld.java
+___________________________________________________________________________
+
+git branch -M main
+
+___________________________________________________________________________
+
+A. Identify Conflicting Files
+Switch to the target branch and merge the other branch:
+git checkout main
+git merge feature-branch
+Git will report a conflict. Check the status:
+git status
+
+Example output:
+
+Unmerged paths:
+  both modified: index.html
+
+This shows that index.html has a merge conflict.
+
+B. Edit the File to Resolve Conflicts
+Open the conflicted file (index.html).
+
+Example conflict markers:
+
+<h1>
+<<<<<<< HEAD
+Welcome to My Website
+=======
+Welcome to Our Website
+>>>>>>> feature-branch
+</h1>
+Decide which content to keep or combine both changes.
+
+Resolved version:
+
+<h1>Welcome to Our Website</h1>
+Remove all conflict markers:
+<<<<<<< HEAD
+=======
+>>>>>>> feature-branch
+Save the file.
+Mark the conflict as resolved:
+git add index.html
+C. Finalize the Merge
+Commit the merge:
+git commit -m "Resolved merge conflict in index.html"
+Verify the repository status:
+git status
+
+Expected output:
+
+nothing to commit, working tree clean
+Push the merged changes (if required):
+git push origin main
+Summary of Git Commands
+# Merge branches
+git checkout main
+git merge feature-branch
+
+# Identify conflicts
+git status
+
+# After editing the file
+git add index.html
+
+# Finalize merge
+git commit -m "Resolved merge conflict in index.html"
+
+# Push changes
+git push origin main
+
+These steps identify the conflicting file, resolve the conflict manually in the HTML file, and complete the merge successfully.
+_______________________________________________________________________________

@@ -1,0 +1,41 @@
+pipeline { 
+    agent any 
+    stages { 
+        stage('Checkout Code') { 
+            steps { 
+                script { 
+                    git branch: 'master', url: 'https://github.com/shravani-k26/DevopsDemo.git' 
+                } 
+            } 
+        } 
+        stage('Verify Files') { 
+            steps { 
+                bat 'dir /S /B' 
+            } 
+        } 
+        stage('Deploy') { 
+            steps {
+                script { 
+                    def srcPath = "C:\\Users\\Shravani Kijbile\\eclipse
+workspace\\Devops\\Demo\\src\\main\\webapp" 
+                    def destPath = "C:\\Program Files\\Apache Software Foundation\\apache
+tomcat-11.0.14\\webapps\\Devops" 
+                    if (fileExists(srcPath)) { 
+                        bat "xcopy /E /I \"${srcPath}\" \"${destPath}\"" 
+                    } else { 
+                        error "Source directory ${srcPath} does not exist!" 
+                    } 
+                } 
+            } 
+        } 
+    } 
+    post { 
+        success { 
+            echo 'Pipeline completed successfully!' 
+            echo 'Index Page: http://localhost:9090/Devops/Index.jsp' 
+        } 
+        failure { 
+            echo 'Pipeline failed!' 
+        } 
+    } 
+} 
